@@ -194,6 +194,3 @@ def log_transaction(user, book_id, action):
 # -------------------------------
 # INIT + RUN
 # -------------------------------
-if __name__ == "__main__":
-    init_files()
-    app.run(debug=True)
