@@ -1,6 +1,4 @@
-pip install reportlab
-# report_generator.py
-
+from flask import Flask, send_file
 import csv
 
 from reportlab.platypus import (
@@ -9,24 +7,18 @@ from reportlab.platypus import (
     Spacer
 )
 
-from reportlab.lib.styles import (
-    getSampleStyleSheet
-)
+from reportlab.lib.styles import getSampleStyleSheet
 
-TRANSACTIONS_FILE = (
-    "data/transactions.csv"
-)
+app = Flask(__name__)
+
+TRANSACTIONS_FILE = "data/transactions.csv"
+OUTPUT_FILE = "Library_Report.pdf"
 
 
 def generate_pdf_report():
 
-    pdf = SimpleDocTemplate(
-        "Library_Report.pdf"
-    )
-
-    styles = (
-        getSampleStyleSheet()
-    )
+    pdf = SimpleDocTemplate(OUTPUT_FILE)
+    styles = getSampleStyleSheet()
 
     content = []
 
@@ -36,35 +28,34 @@ def generate_pdf_report():
     )
 
     content.append(title)
+    content.append(Spacer(1, 12))
 
-    content.append(
-        Spacer(1, 12)
-    )
-
-    with open(
-        TRANSACTIONS_FILE,
-        "r"
-    ) as file:
-
-        reader = csv.reader(
-            file
-        )
+    # Read CSV
+    with open(TRANSACTIONS_FILE, "r") as file:
+        reader = csv.reader(file)
 
         for row in reader:
+            text = Paragraph(str(row), styles["BodyText"])
+            content.append(text)
+            content.append(Spacer(1, 6))
 
-            text = Paragraph(
-                str(row),
-                styles["BodyText"]
-            )
+    pdf.build(content)
 
-            content.append(
-                text
-            )
 
-    pdf.build(
-        content
-    )
+# ---------------- FLASK ROUTES ----------------
 
-    print(
-        "PDF Report Generated Successfully"
-    )
+@app.route("/")
+def home():
+    return "Library Report Generator is Running"
+
+
+@app.route("/generate-report")
+def generate_report():
+    generate_pdf_report()
+    return send_file(OUTPUT_FILE, as_attachment=True)
+
+
+# ---------------- RUN APP ----------------
+
+if __name__ == "__main__":
+    app.run(debug=True)
