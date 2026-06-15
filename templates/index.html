@@ -1,17 +1,141 @@
+```html
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Library Management System</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #d6f0ff, #eaf7ff);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #003366;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+
+        h1 {
+            color: #004080;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+
+        .subtitle {
+            color: #555;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        .menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .menu a {
+            display: block;
+            padding: 15px;
+            text-decoration: none;
+            background-color: #0077b6;
+            color: white;
+            border-radius: 10px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .menu a:hover {
+            background-color: #005f8a;
+            transform: translateY(-3px);
+        }
+
+        footer {
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<h1>AI Library Management System</h1>
+    <div class="container">
 
-<a href="/books">View Books</a><br><br>
+        <h1>📚 AI Library Management System</h1>
 
-<a href="/borrow">Borrow Book</a><br><br>
+        <p class="subtitle">
+            Manage books, students, transactions, analytics, and AI-powered recommendations efficiently.
+        </p>
 
-<a href="/return">Return Book</a>
+        <div class="menu">
+
+            <a href="/admin">🔐 Admin Login</a>
+
+            <a href="/register">📝 Student Registration</a>
+
+            <a href="/books">📖 View Books</a>
+
+            <a href="/borrow">📥 Borrow Book</a>
+
+            <a href="/return">📤 Return Book</a>
+
+            <a href="/search">🔍 Search Book</a>
+
+            <a href="/reserve">📌 Reserve Book</a>
+
+            <a href="/recommend">🤖 AI Recommendation</a>
+
+            <a href="/chatbot">💬 AI Chatbot</a>
+
+            <a href="/payment">💳 Upload Payment</a>
+
+            <a href="/history">📜 Transaction History</a>
+
+            <a href="/analytics">📊 Top Borrowed Books</a>
+
+            <a href="/monthly">📈 Monthly Analytics</a>
+
+            <a href="/report">📄 Generate PDF Report</a>
+
+        </div>
+
+        <footer>
+            © 2026 AI Library Management System | Developed using Python & Flask
+        </footer>
+
+    </div>
 
 </body>
+
 </html>
+```
+
