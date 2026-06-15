@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from recommendation import recommend_book
+
 from library import (
     view_books,
     search_book,
@@ -12,9 +13,9 @@ from library import (
 app = Flask(__name__)
 
 # -------------------------------
-# Library Rules
+# Library Rules (API format)
 # -------------------------------
-def library_rules():
+def get_library_rules():
     return [
         "Borrowed books must be returned within 7 days.",
         "Fine is ₹5 per overdue day.",
@@ -25,18 +26,20 @@ def library_rules():
     ]
 
 # -------------------------------
-# Chatbot Logic
+# Core chatbot logic
 # -------------------------------
-def chatbot_response(user):
+def process_message(user_message):
 
-    user = user.lower().strip()
+    user = user_message.lower().strip()
 
     # Greetings
     if user in ["hi", "hello"]:
-        return "Hello! How can I help you today?"
+        return {"response": "Hello! How can I help you today?"}
 
+    # Help
     if "help" in user:
         return {
+            "response": "Available commands",
             "commands": [
                 "recommend book",
                 "show books",
@@ -52,75 +55,73 @@ def chatbot_response(user):
 
     # Recommendation
     if "recommend" in user or "suggest" in user:
-        return "Please send your interest (example: python, ai, data science)."
+        return {"response": "Please provide your interest (python, ai, data science etc.)"}
 
     if "python" in user and "book" in user:
-        return "Recommended: Python Programming"
+        return {"response": "Recommended: Python Programming"}
 
     if "ai" in user and "book" in user:
-        return "Recommended: Artificial Intelligence"
+        return {"response": "Recommended: Artificial Intelligence"}
 
     if "machine learning" in user:
-        return "Recommended: Machine Learning"
+        return {"response": "Recommended: Machine Learning"}
 
     if "data science" in user:
-        return "Recommended: Data Science Basics"
+        return {"response": "Recommended: Data Science Basics"}
 
-    # Library operations
+    # Library actions (delegated)
     if "show books" in user or "available books" in user:
-        return view_books()
+        return {"response": view_books()}
 
     if "search" in user:
-        return "Please use /search API endpoint"
+        return {"response": "Use /search API endpoint"}
 
     if "borrow" in user:
-        return "Borrow process started. Use /borrow endpoint."
+        return {"response": "Use /borrow API endpoint"}
 
     if "return" in user:
-        return "Return process started. Use /return endpoint."
+        return {"response": "Use /return API endpoint"}
 
     if "reserve" in user:
-        return "Reservation process started. Use /reserve endpoint."
+        return {"response": "Use /reserve API endpoint"}
 
     if "history" in user:
-        return transaction_history()
+        return {"response": transaction_history()}
 
     if "fine" in user:
-        return "Fine is ₹5 per day after due date."
+        return {"response": "Fine is ₹5 per day after due date."}
 
     if "rules" in user:
-        return library_rules()
+        return {"response": get_library_rules()}
 
     if "due date" in user:
-        return "Books must be returned within 7 days."
+        return {"response": "Books must be returned within 7 days."}
 
     if "lost book" in user:
-        return "Lost books must be replaced or compensated."
+        return {"response": "Lost books must be replaced or paid for."}
 
-    return "I didn't understand. Try 'help' for commands."
+    return {
+        "response": "I didn't understand your request. Type 'help' for options."
+    }
 
 # -------------------------------
-# Flask Routes
+# Flask Route (MAIN CHAT API)
 # -------------------------------
-
-@app.route("/")
-def home():
-    return "AI Library Chatbot Running"
-
 @app.route("/chat", methods=["POST"])
 def chat():
-    data = request.get_json()
-    user_message = data.get("message", "")
 
-    response = chatbot_response(user_message)
+    data = request.get_json()
+    message = data.get("message", "")
+
+    result = process_message(message)
 
     return jsonify({
-        "user": user_message,
-        "bot": response
+        "user_message": message,
+        "bot_response": result
     })
 
 # -------------------------------
-# Run App
+# Run Flask App
 # -------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
