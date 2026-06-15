@@ -1,3 +1,13 @@
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Library System Running"
+
+if __name__ == "__main__":
+    app.run()
 from flask import send_from_directory
 
 @app.route("/favicon.ico")
