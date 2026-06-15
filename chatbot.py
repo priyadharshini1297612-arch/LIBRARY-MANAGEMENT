@@ -1,3 +1,4 @@
+from flask import Flask, request, jsonify
 from recommendation import recommend_book
 from library import (
     view_books,
@@ -8,225 +9,118 @@ from library import (
     transaction_history
 )
 
-def show_help():
+app = Flask(__name__)
 
-    print("\n===== AVAILABLE COMMANDS =====")
-
-    print("recommend book")
-    print("show books")
-    print("search book")
-    print("borrow book")
-    print("return book")
-    print("reserve book")
-    print("transaction history")
-    print("library rules")
-    print("fine")
-    print("help")
-    print("exit")
-
-
+# -------------------------------
+# Library Rules
+# -------------------------------
 def library_rules():
+    return [
+        "Borrowed books must be returned within 7 days.",
+        "Fine is ₹5 per overdue day.",
+        "Handle books carefully.",
+        "Lost books must be replaced.",
+        "Student ID is required for borrowing.",
+        "Reserved books must be collected within 2 days."
+    ]
 
-    print("\n===== LIBRARY RULES =====")
+# -------------------------------
+# Chatbot Logic
+# -------------------------------
+def chatbot_response(user):
 
-    print("1. Borrowed books must be returned within 7 days.")
-    print("2. Fine is ₹5 per overdue day.")
-    print("3. Handle books carefully.")
-    print("4. Lost books must be replaced.")
-    print("5. Student ID is required for borrowing.")
-    print("6. Reserved books must be collected within 2 days.")
+    user = user.lower().strip()
 
+    # Greetings
+    if user in ["hi", "hello"]:
+        return "Hello! How can I help you today?"
 
-def chatbot():
+    if "help" in user:
+        return {
+            "commands": [
+                "recommend book",
+                "show books",
+                "search book",
+                "borrow book",
+                "return book",
+                "reserve book",
+                "transaction history",
+                "library rules",
+                "fine"
+            ]
+        }
 
-    print("\n================================")
-    print("AI LIBRARY ASSISTANT")
-    print("================================")
+    # Recommendation
+    if "recommend" in user or "suggest" in user:
+        return "Please send your interest (example: python, ai, data science)."
 
-    print("Type 'help' for available commands.")
+    if "python" in user and "book" in user:
+        return "Recommended: Python Programming"
 
-    while True:
+    if "ai" in user and "book" in user:
+        return "Recommended: Artificial Intelligence"
 
-        user = input("\nYou: ").strip().lower()
+    if "machine learning" in user:
+        return "Recommended: Machine Learning"
 
-        if user == "exit":
+    if "data science" in user:
+        return "Recommended: Data Science Basics"
 
-            print("Bot: Thank you for using the library system.")
-            break
+    # Library operations
+    if "show books" in user or "available books" in user:
+        return view_books()
 
-        elif user == "help":
+    if "search" in user:
+        return "Please use /search API endpoint"
 
-            show_help()
+    if "borrow" in user:
+        return "Borrow process started. Use /borrow endpoint."
 
-        elif (
-            "recommend" in user
-            or
-            "suggest" in user
-        ):
+    if "return" in user:
+        return "Return process started. Use /return endpoint."
 
-            interest = input(
-                "Bot: What topic are you interested in? "
-            )
+    if "reserve" in user:
+        return "Reservation process started. Use /reserve endpoint."
 
-            book = recommend_book(
-                interest
-            )
+    if "history" in user:
+        return transaction_history()
 
-            print(
-                f"Bot: I recommend '{book}'."
-            )
+    if "fine" in user:
+        return "Fine is ₹5 per day after due date."
 
-        elif (
-            "python" in user
-            and
-            "book" in user
-        ):
+    if "rules" in user:
+        return library_rules()
 
-            print(
-                "Bot: Recommended book: Python Programming"
-            )
+    if "due date" in user:
+        return "Books must be returned within 7 days."
 
-        elif (
-            "ai" in user
-            and
-            "book" in user
-        ):
+    if "lost book" in user:
+        return "Lost books must be replaced or compensated."
 
-            print(
-                "Bot: Recommended book: Artificial Intelligence"
-            )
+    return "I didn't understand. Try 'help' for commands."
 
-        elif (
-            "machine learning" in user
-        ):
+# -------------------------------
+# Flask Routes
+# -------------------------------
 
-            print(
-                "Bot: Recommended book: Machine Learning"
-            )
+@app.route("/")
+def home():
+    return "AI Library Chatbot Running"
 
-        elif (
-            "data science" in user
-        ):
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.get_json()
+    user_message = data.get("message", "")
 
-            print(
-                "Bot: Recommended book: Data Science Basics"
-            )
+    response = chatbot_response(user_message)
 
-        elif (
-            "show books" in user
-            or
-            "available books" in user
-        ):
+    return jsonify({
+        "user": user_message,
+        "bot": response
+    })
 
-            view_books()
-
-        elif (
-            "search" in user
-        ):
-
-            search_book()
-
-        elif (
-            "borrow" in user
-        ):
-
-            print(
-                "Bot: Starting borrow process..."
-            )
-
-            borrow_book()
-
-        elif (
-            "return" in user
-        ):
-
-            print(
-                "Bot: Starting return process..."
-            )
-
-            return_book()
-
-        elif (
-            "reserve" in user
-        ):
-
-            print(
-                "Bot: Starting reservation process..."
-            )
-
-            reserve_book()
-
-        elif (
-            "history" in user
-        ):
-
-            transaction_history()
-
-        elif (
-            "fine" in user
-        ):
-
-            print(
-                "Bot: Fine is ₹5 per day after the due date."
-            )
-
-        elif (
-            "rules" in user
-        ):
-
-            library_rules()
-
-        elif (
-            "due date" in user
-        ):
-
-            print(
-                "Bot: Books must be returned within 7 days from the borrowing date."
-            )
-
-        elif (
-            "lost book" in user
-        ):
-
-            print(
-                "Bot: Lost books must be replaced or paid for according to library policy."
-            )
-
-        elif (
-            "hello" in user
-            or
-            "hi" in user
-        ):
-
-            print(
-                "Bot: Hello! How can I help you today?"
-            )
-
-        elif (
-            "thank you" in user
-            or
-            "thanks" in user
-        ):
-
-            print(
-                "Bot: You're welcome!"
-            )
-
-        else:
-
-            print(
-                """
-Bot: I didn't understand that.
-
-Try:
-- recommend book
-- show books
-- search book
-- borrow book
-- return book
-- reserve book
-- fine
-- library rules
-- help
-                """
-            )
+# -------------------------------
+# Run App
+# -------------------------------
+if __name__ == "__main__":
+    app.run(debug=True)
