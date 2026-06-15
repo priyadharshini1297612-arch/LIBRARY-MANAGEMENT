@@ -1,4 +1,8 @@
+from flask import send_from_directory
 
+@app.route("/favicon.ico")
+def favicon():
+    return "", 204
 from flask import Flask, render_template, request
 import csv
 import os
