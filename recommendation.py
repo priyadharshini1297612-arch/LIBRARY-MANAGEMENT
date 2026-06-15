@@ -1,10 +1,11 @@
-# recommendation_system.py
-
+from flask import Flask, request, jsonify
 import csv
 import os
 
+app = Flask(__name__)
+
 # -------------------------------
-# Book Database for Recommendations
+# Book Database
 # -------------------------------
 BOOK_DATABASE = {
     "python": [
@@ -12,61 +13,51 @@ BOOK_DATABASE = {
         "Advanced Python",
         "Automate the Boring Stuff with Python"
     ],
-
     "ai": [
         "Artificial Intelligence",
         "AI Foundations",
         "Modern Artificial Intelligence"
     ],
-
     "machine learning": [
         "Machine Learning",
         "Hands-On Machine Learning",
         "Practical Machine Learning"
     ],
-
     "deep learning": [
         "Deep Learning",
         "Neural Networks and Deep Learning",
         "Advanced Deep Learning"
     ],
-
     "data science": [
         "Data Science Basics",
         "Data Analytics",
         "Data Science from Scratch"
     ],
-
     "web development": [
         "HTML and CSS",
         "JavaScript Guide",
         "Flask Web Development"
     ],
-
     "cyber security": [
         "Cyber Security Essentials",
         "Ethical Hacking",
         "Network Security"
     ],
-
     "cloud": [
         "Cloud Computing",
         "AWS Fundamentals",
         "Cloud Architecture"
     ],
-
     "database": [
         "Database Systems",
         "SQL Complete Guide",
         "Database Design"
     ],
-
     "java": [
         "Java Programming",
         "Core Java",
         "Advanced Java"
     ],
-
     "c++": [
         "C++ Programming",
         "Object Oriented Programming in C++",
@@ -74,9 +65,9 @@ BOOK_DATABASE = {
     ]
 }
 
-# --------------------------------
-# Create books.csv if it doesn't exist
-# --------------------------------
+# -------------------------------
+# Create books.csv if not exists
+# -------------------------------
 def create_books_csv():
     filename = "books.csv"
 
@@ -101,28 +92,10 @@ def create_books_csv():
             writer.writerow(["book_id", "title", "author", "available"])
             writer.writerows(books)
 
-        print("books.csv created successfully.")
-    else:
-        print("books.csv already exists.")
-
-
-# --------------------------------
-# Recommend a single book
-# --------------------------------
-def recommend_book(interest):
-    interest = interest.lower().strip()
-
-    for topic, books in BOOK_DATABASE.items():
-        if topic in interest:
-            return books[0]
-
-    return "Python Programming"
-
-
-# --------------------------------
-# Recommend multiple books
-# --------------------------------
-def get_multiple_recommendations(interest):
+# -------------------------------
+# Recommendation Logic
+# -------------------------------
+def get_recommendations(interest):
     interest = interest.lower().strip()
 
     for topic, books in BOOK_DATABASE.items():
@@ -135,24 +108,37 @@ def get_multiple_recommendations(interest):
         "Data Science Basics"
     ]
 
+# -------------------------------
+# Flask Routes
+# -------------------------------
 
-# --------------------------------
-# Display recommendations
-# --------------------------------
-def show_recommendations():
-    interest = input("Enter your area of interest: ")
+@app.route("/")
+def home():
+    return "Recommendation System Running"
 
-    recommendations = get_multiple_recommendations(interest)
-
-    print("\nRecommended Books:\n")
-
-    for index, book in enumerate(recommendations, start=1):
-        print(f"{index}. {book}")
-
-
-# --------------------------------
-# Main Program
-# --------------------------------
-if __name__ == "__main__":
+@app.route("/create-books")
+def create_books():
     create_books_csv()
-    show_recommendations()
+    return "books.csv created (or already exists)"
+
+@app.route("/recommend", methods=["GET"])
+def recommend():
+    interest = request.args.get("interest", "")
+
+    if not interest:
+        return jsonify({
+            "error": "Please provide interest like ?interest=python"
+        })
+
+    recommendations = get_recommendations(interest)
+
+    return jsonify({
+        "interest": interest,
+        "recommendations": recommendations
+    })
+
+# -------------------------------
+# Run App
+# -------------------------------
+if __name__ == "__main__":
+    app.run(debug=True)
