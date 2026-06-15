@@ -1,8 +1,5 @@
-from flask import Flask, request, jsonify
 import csv
 import os
-
-app = Flask(__name__)
 
 # -------------------------------
 # BOOK DATABASE
@@ -93,7 +90,7 @@ def create_books_csv():
             writer.writerows(books)
 
 # -------------------------------
-# Get recommendations logic
+# Recommendation Logic
 # -------------------------------
 def get_recommendations(interest):
 
@@ -110,37 +107,10 @@ def get_recommendations(interest):
     ]
 
 # -------------------------------
-# API: Recommendation Endpoint
+# Single recommendation helper
 # -------------------------------
-@app.route("/recommend", methods=["GET"])
-def recommend():
+def recommend_book(interest):
 
-    interest = request.args.get("interest", "")
+    books = get_recommendations(interest)
 
-    if not interest:
-        return jsonify({
-            "error": "Please provide interest like ?interest=python"
-        }), 400
-
-    recommendations = get_recommendations(interest)
-
-    return jsonify({
-        "interest": interest,
-        "recommendations": recommendations
-    })
-
-# -------------------------------
-# API: Create Books CSV
-# -------------------------------
-@app.route("/create-books", methods=["GET"])
-def create_books():
-
-    create_books_csv()
-
-    return jsonify({
-        "message": "books.csv created successfully"
-    })
-
-# -------------------------------
-# Run App
-# -------------------------------
+    return books[0]
