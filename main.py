@@ -4,6 +4,7 @@ from library import (
     register_student,
     view_books,
     borrow_book,
+    initialize_files,
     return_book,
     search_book,
     reserve_book,
@@ -56,7 +57,7 @@ def recommendation_menu():
         f"\nRecommended Book: {book}"
     )
 
-
+initialize_files()
 def main_menu():
 
     while True:
