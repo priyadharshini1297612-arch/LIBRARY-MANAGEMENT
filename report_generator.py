@@ -1,20 +1,17 @@
-from flask import Flask, send_file, jsonify
 import csv
 import os
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 
-app = Flask(__name__)
-
 # -------------------------------
-# FILE PATH
+# FILE PATHS
 # -------------------------------
 TRANSACTIONS_FILE = "data/transactions.csv"
 OUTPUT_FILE = "Library_Report.pdf"
 
 # -------------------------------
-# Generate PDF Report
+# Generate PDF Report (LOGIC ONLY)
 # -------------------------------
 def generate_pdf_report():
 
@@ -28,13 +25,13 @@ def generate_pdf_report():
     content.append(title)
     content.append(Spacer(1, 12))
 
-    # Check file exists
+    # If file missing
     if not os.path.exists(TRANSACTIONS_FILE):
         content.append(Paragraph("No transaction data found.", styles["BodyText"]))
         pdf.build(content)
-        return
+        return OUTPUT_FILE
 
-    # Read CSV data
+    # Read CSV
     with open(TRANSACTIONS_FILE, "r") as file:
         reader = csv.reader(file)
 
@@ -45,19 +42,4 @@ def generate_pdf_report():
 
     pdf.build(content)
 
-# -------------------------------
-# API: Download Report
-# -------------------------------
-@app.route("/generate-report", methods=["GET"])
-def generate_report():
-
-    generate_pdf_report()
-
-    if not os.path.exists(OUTPUT_FILE):
-        return jsonify({"error": "Report generation failed"}), 500
-
-    return send_file(OUTPUT_FILE, as_attachment=True)
-
-# -------------------------------
-# Run App
-# -------------------------------
+    return OUTPUT_FILE
