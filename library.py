@@ -1,87 +1,40 @@
+from flask import Flask, request, jsonify
 import csv
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
+app = Flask(__name__)
+
+# -------------------------------
+# FILE PATHS
+# -------------------------------
 BOOKS_FILE = "data/books.csv"
-STUDENTS_FILE = "data/students.csv"
 TRANSACTIONS_FILE = "data/transactions.csv"
-RESERVATIONS_FILE = "data/reservations.csv"
 
+# -------------------------------
+# Ensure CSV exists
+# -------------------------------
+def init_files():
 
-def initialize_files():
-    os.makedirs("data", exist_ok=True)
+    if not os.path.exists("data"):
+        os.makedirs("data")
 
-    # books.csv
     if not os.path.exists(BOOKS_FILE):
         with open(BOOKS_FILE, "w", newline="") as file:
             writer = csv.writer(file)
+            writer.writerow(["book_id", "title", "author", "available"])
 
-            writer.writerow([
-                "book_id",
-                "title",
-                "author",
-                "available"
-            ])
-
-            writer.writerows([
-                ["1", "Python Programming", "John Smith", "Yes"],
-                ["2", "Machine Learning", "Andrew Ng", "Yes"],
-                ["3", "Data Science Basics", "Alice Brown", "Yes"],
-                ["4", "Artificial Intelligence", "Stuart Russell", "Yes"],
-                ["5", "Deep Learning", "Ian Goodfellow", "Yes"]
-            ])
-
-    # students.csv
-    if not os.path.exists(STUDENTS_FILE):
-        with open(STUDENTS_FILE, "w", newline="") as file:
-            writer = csv.writer(file)
-
-            writer.writerow([
-                "student_id",
-                "name",
-                "email"
-            ])
-
-    # transactions.csv
     if not os.path.exists(TRANSACTIONS_FILE):
         with open(TRANSACTIONS_FILE, "w", newline="") as file:
             writer = csv.writer(file)
+            writer.writerow(["user", "book_id", "action", "date"])
 
-            writer.writerow([
-                "student_id",
-                "book_id",
-                "borrow_date",
-                "due_date",
-                "return_date",
-                "fine"
-            ])
+# -------------------------------
+# 1. View Books
+# -------------------------------
+@app.route("/books", methods=["GET"])
+def view_books():
 
-    # reservations.csv
-    if not os.path.exists(RESERVATIONS_FILE):
-        with open(RESERVATIONS_FILE, "w", newline="") as file:
-            writer = csv.writer(file)
-
-            writer.writerow([
-                "student_id",
-                "book_id",
-                "reservation_date"
-            ])
-
-
-def register_student(student_id, name, email):
-    with open(STUDENTS_FILE, "a", newline="") as file:
-        writer = csv.writer(file)
-
-        writer.writerow([
-            student_id,
-            name,
-            email
-        ])
-
-    return "Student Registered Successfully"
-
-
-def get_books():
     books = []
 
     with open(BOOKS_FILE, "r") as file:
@@ -90,11 +43,15 @@ def get_books():
         for row in reader:
             books.append(row)
 
-    return books
+    return jsonify(books)
 
+# -------------------------------
+# 2. Search Book
+# -------------------------------
+@app.route("/search", methods=["GET"])
+def search_book():
 
-def search_book(keyword):
-    keyword = keyword.lower()
+    query = request.args.get("q", "").lower()
 
     results = []
 
@@ -102,258 +59,141 @@ def search_book(keyword):
         reader = csv.DictReader(file)
 
         for row in reader:
-            if (
-                keyword in row["title"].lower()
-                or
-                keyword in row["author"].lower()
-            ):
+            if query in row["title"].lower() or query in row["author"].lower():
                 results.append(row)
 
-    return results
+    return jsonify(results)
 
+# -------------------------------
+# 3. Borrow Book
+# -------------------------------
+@app.route("/borrow", methods=["POST"])
+def borrow_book():
 
-def borrow_book(student_id, book_id):
+    data = request.get_json()
+
+    user = data.get("user")
+    book_id = data.get("book_id")
+
     books = []
-
-    available = False
+    found = False
 
     with open(BOOKS_FILE, "r") as file:
         reader = csv.DictReader(file)
+        fieldnames = reader.fieldnames
 
         for row in reader:
-            if (
-                row["book_id"] == book_id
-                and
-                row["available"] == "Yes"
-            ):
+            if row["book_id"] == str(book_id) and row["available"] == "Yes":
                 row["available"] = "No"
-                available = True
+                found = True
 
             books.append(row)
 
-    if not available:
-        return False, "Book Not Available"
+    if not found:
+        return jsonify({"error": "Book not available"}), 400
 
     with open(BOOKS_FILE, "w", newline="") as file:
-        fieldnames = [
-            "book_id",
-            "title",
-            "author",
-            "available"
-        ]
-
-        writer = csv.DictWriter(
-            file,
-            fieldnames=fieldnames
-        )
-
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(books)
 
-    borrow_date = datetime.now()
+    log_transaction(user, book_id, "borrow")
 
-    due_date = borrow_date + timedelta(days=7)
+    return jsonify({
+        "message": "Book borrowed successfully",
+        "book_id": book_id,
+        "user": user
+    })
 
-    with open(
-        TRANSACTIONS_FILE,
-        "a",
-        newline=""
-    ) as file:
+# -------------------------------
+# 4. Return Book
+# -------------------------------
+@app.route("/return", methods=["POST"])
+def return_book():
 
-        writer = csv.writer(file)
+    data = request.get_json()
 
-        writer.writerow([
-            student_id,
-            book_id,
-            borrow_date.date(),
-            due_date.date(),
-            "",
-            0
-        ])
-
-    return (
-        True,
-        f"Book Borrowed Successfully. Due Date: {due_date.date()}"
-    )
-
-
-def return_book(book_id):
-    rows = []
-
-    fine = 0
-
-    with open(TRANSACTIONS_FILE, "r") as file:
-        reader = csv.reader(file)
-
-        header = next(reader)
-
-        for row in reader:
-            if (
-                row[1] == book_id
-                and
-                row[4] == ""
-            ):
-                due_date = datetime.strptime(
-                    row[3],
-                    "%Y-%m-%d"
-                )
-
-                return_date = datetime.now()
-
-                if return_date > due_date:
-                    fine = (
-                        return_date - due_date
-                    ).days * 5
-
-                row[4] = str(
-                    return_date.date()
-                )
-
-                row[5] = str(fine)
-
-            rows.append(row)
-
-    with open(
-        TRANSACTIONS_FILE,
-        "w",
-        newline=""
-    ) as file:
-
-        writer = csv.writer(file)
-
-        writer.writerow(header)
-
-        writer.writerows(rows)
+    user = data.get("user")
+    book_id = data.get("book_id")
 
     books = []
 
     with open(BOOKS_FILE, "r") as file:
         reader = csv.DictReader(file)
+        fieldnames = reader.fieldnames
 
         for row in reader:
-            if row["book_id"] == book_id:
+            if row["book_id"] == str(book_id):
                 row["available"] = "Yes"
 
             books.append(row)
 
-    with open(
-        BOOKS_FILE,
-        "w",
-        newline=""
-    ) as file:
-
-        fieldnames = [
-            "book_id",
-            "title",
-            "author",
-            "available"
-        ]
-
-        writer = csv.DictWriter(
-            file,
-            fieldnames=fieldnames
-        )
-
+    with open(BOOKS_FILE, "w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
-
         writer.writerows(books)
 
-    return f"Book Returned Successfully. Fine: ₹{fine}"
+    log_transaction(user, book_id, "return")
 
+    return jsonify({
+        "message": "Book returned successfully",
+        "book_id": book_id,
+        "user": user
+    })
 
-def reserve_book(student_id, book_id):
-    reservation_date = datetime.now().date()
+# -------------------------------
+# 5. Reserve Book
+# -------------------------------
+@app.route("/reserve", methods=["POST"])
+def reserve_book():
 
-    with open(
-        RESERVATIONS_FILE,
-        "a",
-        newline=""
-    ) as file:
+    data = request.get_json()
 
-        writer = csv.writer(file)
+    user = data.get("user")
+    book_id = data.get("book_id")
 
-        writer.writerow([
-            student_id,
-            book_id,
-            reservation_date
-        ])
+    log_transaction(user, book_id, "reserve")
 
-    return "Book Reserved Successfully"
+    return jsonify({
+        "message": "Book reserved successfully",
+        "book_id": book_id,
+        "user": user
+    })
 
+# -------------------------------
+# 6. Transaction History
+# -------------------------------
+@app.route("/transactions", methods=["GET"])
+def transaction_history():
 
-def get_transaction_history():
-    transactions = []
+    data = []
 
     with open(TRANSACTIONS_FILE, "r") as file:
-        reader = csv.DictReader(file)
+        reader = csv.reader(file)
 
         for row in reader:
-            transactions.append(row)
+            data.append(row)
 
-    return transactions
+    return jsonify(data)
 
+# -------------------------------
+# LOG TRANSACTIONS
+# -------------------------------
+def log_transaction(user, book_id, action):
 
-def add_book(book_id, title, author):
-    with open(
-        BOOKS_FILE,
-        "a",
-        newline=""
-    ) as file:
-
+    with open(TRANSACTIONS_FILE, "a", newline="") as file:
         writer = csv.writer(file)
 
         writer.writerow([
+            user,
             book_id,
-            title,
-            author,
-            "Yes"
+            action,
+            datetime.now().date()
         ])
 
-    return "Book Added Successfully"
-
-
-def remove_book(book_id):
-    books = []
-
-    with open(BOOKS_FILE, "r") as file:
-        reader = csv.DictReader(file)
-
-        for row in reader:
-            if row["book_id"] != book_id:
-                books.append(row)
-
-    with open(
-        BOOKS_FILE,
-        "w",
-        newline=""
-    ) as file:
-
-        fieldnames = [
-            "book_id",
-            "title",
-            "author",
-            "available"
-        ]
-
-        writer = csv.DictWriter(
-            file,
-            fieldnames=fieldnames
-        )
-
-        writer.writeheader()
-
-        writer.writerows(books)
-
-    return "Book Removed Successfully"
-
-
-def get_students():
-    students = []
-
-    with open(STUDENTS_FILE, "r") as file:
-        reader = csv.DictReader(file)
-
-        for row in reader:
-            students.append(row)
-
-    return students
+# -------------------------------
+# INIT + RUN
+# -------------------------------
+if __name__ == "__main__":
+    init_files()
+    app.run(debug=True)
