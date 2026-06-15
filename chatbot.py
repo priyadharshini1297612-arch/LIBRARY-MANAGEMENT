@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
-from recommendation import recommend_book
 
+from recommendation import recommend_book
 from library import (
     view_books,
     search_book,
@@ -13,7 +13,7 @@ from library import (
 app = Flask(__name__)
 
 # -------------------------------
-# Library Rules (API format)
+# Library Rules
 # -------------------------------
 def get_library_rules():
     return [
@@ -26,17 +26,15 @@ def get_library_rules():
     ]
 
 # -------------------------------
-# Core chatbot logic
+# Chat Logic
 # -------------------------------
 def process_message(user_message):
 
     user = user_message.lower().strip()
 
-    # Greetings
     if user in ["hi", "hello"]:
         return {"response": "Hello! How can I help you today?"}
 
-    # Help
     if "help" in user:
         return {
             "response": "Available commands",
@@ -53,7 +51,6 @@ def process_message(user_message):
             ]
         }
 
-    # Recommendation
     if "recommend" in user or "suggest" in user:
         return {"response": "Please provide your interest (python, ai, data science etc.)"}
 
@@ -69,7 +66,6 @@ def process_message(user_message):
     if "data science" in user:
         return {"response": "Recommended: Data Science Basics"}
 
-    # Library actions (delegated)
     if "show books" in user or "available books" in user:
         return {"response": view_books()}
 
@@ -100,12 +96,10 @@ def process_message(user_message):
     if "lost book" in user:
         return {"response": "Lost books must be replaced or paid for."}
 
-    return {
-        "response": "I didn't understand your request. Type 'help' for options."
-    }
+    return {"response": "I didn't understand your request. Type 'help' for options."}
 
 # -------------------------------
-# Flask Route (MAIN CHAT API)
+# API Route
 # -------------------------------
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -121,5 +115,5 @@ def chat():
     })
 
 # -------------------------------
-# Run Flask App
-# ---------------------------
+# IMPORTANT: REMOVE app.run() FOR VERCEL
+# -------------------------------
