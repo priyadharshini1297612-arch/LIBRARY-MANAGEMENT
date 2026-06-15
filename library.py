@@ -1,5 +1,6 @@
 import csv
 import os
+from datetime import datetime, timedelta
 
 BOOKS_FILE = "data/books.csv"
 STUDENTS_FILE = "data/students.csv"
@@ -8,18 +9,11 @@ RESERVATIONS_FILE = "data/reservations.csv"
 
 
 def initialize_files():
-
     os.makedirs("data", exist_ok=True)
 
     # books.csv
     if not os.path.exists(BOOKS_FILE):
-
-        with open(
-            BOOKS_FILE,
-            "w",
-            newline=""
-        ) as file:
-
+        with open(BOOKS_FILE, "w", newline="") as file:
             writer = csv.writer(file)
 
             writer.writerow([
@@ -30,47 +24,16 @@ def initialize_files():
             ])
 
             writer.writerows([
-                [
-                    "1",
-                    "Python Programming",
-                    "John Smith",
-                    "Yes"
-                ],
-                [
-                    "2",
-                    "Machine Learning",
-                    "Andrew Ng",
-                    "Yes"
-                ],
-                [
-                    "3",
-                    "Data Science Basics",
-                    "Alice Brown",
-                    "Yes"
-                ],
-                [
-                    "4",
-                    "Artificial Intelligence",
-                    "Stuart Russell",
-                    "Yes"
-                ],
-                [
-                    "5",
-                    "Deep Learning",
-                    "Ian Goodfellow",
-                    "Yes"
-                ]
+                ["1", "Python Programming", "John Smith", "Yes"],
+                ["2", "Machine Learning", "Andrew Ng", "Yes"],
+                ["3", "Data Science Basics", "Alice Brown", "Yes"],
+                ["4", "Artificial Intelligence", "Stuart Russell", "Yes"],
+                ["5", "Deep Learning", "Ian Goodfellow", "Yes"]
             ])
 
     # students.csv
     if not os.path.exists(STUDENTS_FILE):
-
-        with open(
-            STUDENTS_FILE,
-            "w",
-            newline=""
-        ) as file:
-
+        with open(STUDENTS_FILE, "w", newline="") as file:
             writer = csv.writer(file)
 
             writer.writerow([
@@ -81,13 +44,7 @@ def initialize_files():
 
     # transactions.csv
     if not os.path.exists(TRANSACTIONS_FILE):
-
-        with open(
-            TRANSACTIONS_FILE,
-            "w",
-            newline=""
-        ) as file:
-
+        with open(TRANSACTIONS_FILE, "w", newline="") as file:
             writer = csv.writer(file)
 
             writer.writerow([
@@ -101,13 +58,7 @@ def initialize_files():
 
     # reservations.csv
     if not os.path.exists(RESERVATIONS_FILE):
-
-        with open(
-            RESERVATIONS_FILE,
-            "w",
-            newline=""
-        ) as file:
-
+        with open(RESERVATIONS_FILE, "w", newline="") as file:
             writer = csv.writer(file)
 
             writer.writerow([
@@ -116,23 +67,9 @@ def initialize_files():
                 "reservation_date"
             ])
 
-    print(
-        "CSV files initialized successfully."
-    )
- 
 
-def register_student():
-
-    student_id = input("Enter Student ID: ")
-    name = input("Enter Name: ")
-    email = input("Enter Email: ")
-
-    with open(
-        STUDENTS_FILE,
-        "a",
-        newline=""
-    ) as file:
-
+def register_student(student_id, name, email):
+    with open(STUDENTS_FILE, "a", newline="") as file:
         writer = csv.writer(file)
 
         writer.writerow([
@@ -141,122 +78,63 @@ def register_student():
             email
         ])
 
-    print("Student Registered Successfully")
+    return "Student Registered Successfully"
 
 
-def view_books():
+def get_books():
+    books = []
 
-    print("\nAVAILABLE BOOKS\n")
-
-    with open(
-        BOOKS_FILE,
-        "r"
-    ) as file:
-
+    with open(BOOKS_FILE, "r") as file:
         reader = csv.DictReader(file)
 
         for row in reader:
+            books.append(row)
 
-            print(
-                f"Book ID: {row['book_id']}"
-            )
-
-            print(
-                f"Title: {row['title']}"
-            )
-
-            print(
-                f"Author: {row['author']}"
-            )
-
-            print(
-                f"Available: {row['available']}"
-            )
-
-            print("-" * 30)
+    return books
 
 
-def search_book():
+def search_book(keyword):
+    keyword = keyword.lower()
 
-    keyword = input(
-        "Enter Book Name or Author: "
-    ).lower()
+    results = []
 
-    found = False
-
-    with open(
-        BOOKS_FILE,
-        "r"
-    ) as file:
-
+    with open(BOOKS_FILE, "r") as file:
         reader = csv.DictReader(file)
 
         for row in reader:
-
             if (
                 keyword in row["title"].lower()
                 or
                 keyword in row["author"].lower()
             ):
+                results.append(row)
 
-                found = True
-
-                print(row)
-
-    if not found:
-
-        print("No Book Found")
+    return results
 
 
-def borrow_book():
-
-    student_id = input(
-        "Student ID: "
-    )
-
-    book_id = input(
-        "Book ID: "
-    )
-
+def borrow_book(student_id, book_id):
     books = []
 
     available = False
 
-    with open(
-        BOOKS_FILE,
-        "r"
-    ) as file:
-
+    with open(BOOKS_FILE, "r") as file:
         reader = csv.DictReader(file)
 
         for row in reader:
-
             if (
                 row["book_id"] == book_id
                 and
                 row["available"] == "Yes"
             ):
-
                 row["available"] = "No"
-
                 available = True
 
             books.append(row)
 
     if not available:
+        return False, "Book Not Available"
 
-        print(
-            "Book Not Available"
-        )
-
-        return
-
-    with open(
-        BOOKS_FILE,
-        "w",
-        newline=""
-    ) as file:
-
+    with open(BOOKS_FILE, "w", newline="") as file:
         fieldnames = [
             "book_id",
             "title",
@@ -270,14 +148,11 @@ def borrow_book():
         )
 
         writer.writeheader()
-
         writer.writerows(books)
 
     borrow_date = datetime.now()
 
-    due_date = borrow_date + timedelta(
-        days=7
-    )
+    due_date = borrow_date + timedelta(days=7)
 
     with open(
         TRANSACTIONS_FILE,
@@ -296,42 +171,28 @@ def borrow_book():
             0
         ])
 
-    print(
-        f"Book Borrowed Successfully"
-    )
-
-    print(
-        f"Due Date: {due_date.date()}"
+    return (
+        True,
+        f"Book Borrowed Successfully. Due Date: {due_date.date()}"
     )
 
 
-def return_book():
-
-    book_id = input(
-        "Enter Book ID: "
-    )
-
+def return_book(book_id):
     rows = []
 
     fine = 0
 
-    with open(
-        TRANSACTIONS_FILE,
-        "r"
-    ) as file:
-
+    with open(TRANSACTIONS_FILE, "r") as file:
         reader = csv.reader(file)
 
         header = next(reader)
 
         for row in reader:
-
             if (
                 row[1] == book_id
                 and
                 row[4] == ""
             ):
-
                 due_date = datetime.strptime(
                     row[3],
                     "%Y-%m-%d"
@@ -340,20 +201,15 @@ def return_book():
                 return_date = datetime.now()
 
                 if return_date > due_date:
-
                     fine = (
-                        return_date
-                        -
-                        due_date
+                        return_date - due_date
                     ).days * 5
 
                 row[4] = str(
                     return_date.date()
                 )
 
-                row[5] = str(
-                    fine
-                )
+                row[5] = str(fine)
 
             rows.append(row)
 
@@ -371,17 +227,11 @@ def return_book():
 
     books = []
 
-    with open(
-        BOOKS_FILE,
-        "r"
-    ) as file:
-
+    with open(BOOKS_FILE, "r") as file:
         reader = csv.DictReader(file)
 
         for row in reader:
-
             if row["book_id"] == book_id:
-
                 row["available"] = "Yes"
 
             books.append(row)
@@ -408,28 +258,11 @@ def return_book():
 
         writer.writerows(books)
 
-    print(
-        f"Book Returned"
-    )
-
-    print(
-        f"Fine: ₹{fine}"
-    )
+    return f"Book Returned Successfully. Fine: ₹{fine}"
 
 
-def reserve_book():
-
-    student_id = input(
-        "Student ID: "
-    )
-
-    book_id = input(
-        "Book ID: "
-    )
-
-    reservation_date = (
-        datetime.now().date()
-    )
+def reserve_book(student_id, book_id):
+    reservation_date = datetime.now().date()
 
     with open(
         RESERVATIONS_FILE,
@@ -445,43 +278,22 @@ def reserve_book():
             reservation_date
         ])
 
-    print(
-        "Book Reserved Successfully"
-    )
+    return "Book Reserved Successfully"
 
 
-def transaction_history():
+def get_transaction_history():
+    transactions = []
 
-    print(
-        "\nTRANSACTION HISTORY\n"
-    )
-
-    with open(
-        TRANSACTIONS_FILE,
-        "r"
-    ) as file:
-
-        reader = csv.reader(file)
+    with open(TRANSACTIONS_FILE, "r") as file:
+        reader = csv.DictReader(file)
 
         for row in reader:
+            transactions.append(row)
 
-            print(row)
+    return transactions
 
 
-def add_book():
-
-    book_id = input(
-        "Book ID: "
-    )
-
-    title = input(
-        "Book Title: "
-    )
-
-    author = input(
-        "Author: "
-    )
-
+def add_book(book_id, title, author):
     with open(
         BOOKS_FILE,
         "a",
@@ -497,34 +309,17 @@ def add_book():
             "Yes"
         ])
 
-    print(
-        "Book Added Successfully"
-    )
+    return "Book Added Successfully"
 
 
-def remove_book():
-
-    book_id = input(
-        "Enter Book ID: "
-    )
-
+def remove_book(book_id):
     books = []
 
-    with open(
-        BOOKS_FILE,
-        "r"
-    ) as file:
-
+    with open(BOOKS_FILE, "r") as file:
         reader = csv.DictReader(file)
 
         for row in reader:
-
-            if (
-                row["book_id"]
-                !=
-                book_id
-            ):
-
+            if row["book_id"] != book_id:
                 books.append(row)
 
     with open(
@@ -549,24 +344,16 @@ def remove_book():
 
         writer.writerows(books)
 
-    print(
-        "Book Removed Successfully"
-    )
+    return "Book Removed Successfully"
 
 
-def view_students():
+def get_students():
+    students = []
 
-    print(
-        "\nREGISTERED STUDENTS\n"
-    )
-
-    with open(
-        STUDENTS_FILE,
-        "r"
-    ) as file:
-
-        reader = csv.reader(file)
+    with open(STUDENTS_FILE, "r") as file:
+        reader = csv.DictReader(file)
 
         for row in reader:
+            students.append(row)
 
-            print(row)
+    return students
