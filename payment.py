@@ -1,103 +1,59 @@
-# payment.py
-
+from flask import Flask, request, jsonify
 import csv
 import os
 import shutil
 from datetime import datetime
 
+app = Flask(__name__)
+
 PAYMENTS_FOLDER = "payments"
 PAYMENTS_FILE = "data/payments.csv"
 
-
+# -------------------------------
+# Setup folder
+# -------------------------------
 def create_payment_folder():
+    if not os.path.exists(PAYMENTS_FOLDER):
+        os.makedirs(PAYMENTS_FOLDER)
 
-    if not os.path.exists(
-        PAYMENTS_FOLDER
-    ):
-
-        os.makedirs(
-            PAYMENTS_FOLDER
-        )
-
-
+# -------------------------------
+# Generate Payment ID
+# -------------------------------
 def generate_payment_id():
-
     try:
-
-        with open(
-            PAYMENTS_FILE,
-            "r"
-        ) as file:
-
-            rows = list(
-                csv.reader(file)
-            )
-
-            return (
-                len(rows)
-            )
-
+        with open(PAYMENTS_FILE, "r") as file:
+            rows = list(csv.reader(file))
+            return len(rows)
     except:
-
         return 1
 
-
-def upload_screenshot():
+# -------------------------------
+# Upload Payment (API version)
+# -------------------------------
+@app.route("/upload-payment", methods=["POST"])
+def upload_payment():
 
     create_payment_folder()
 
-    student_id = input(
-        "Enter Student ID: "
-    )
+    data = request.json
 
-    amount = input(
-        "Enter Amount Paid: "
-    )
+    student_id = data.get("student_id")
+    amount = data.get("amount")
+    screenshot_path = data.get("screenshot_path")
 
-    screenshot_path = input(
-        "Enter Screenshot File Path: "
-    )
+    if not os.path.exists(screenshot_path):
+        return jsonify({"error": "Screenshot file not found"}), 400
 
-    if not os.path.exists(
-        screenshot_path
-    ):
+    payment_id = generate_payment_id()
 
-        print(
-            "Screenshot file not found."
-        )
+    filename = f"payment_{payment_id}_{os.path.basename(screenshot_path)}"
 
-        return
+    destination = os.path.join(PAYMENTS_FOLDER, filename)
 
-    payment_id = (
-        generate_payment_id()
-    )
+    shutil.copy(screenshot_path, destination)
 
-    filename = (
-        f"payment_{payment_id}_"
-        +
-        os.path.basename(
-            screenshot_path
-        )
-    )
-
-    destination = os.path.join(
-        PAYMENTS_FOLDER,
-        filename
-    )
-
-    shutil.copy(
-        screenshot_path,
-        destination
-    )
-
-    with open(
-        PAYMENTS_FILE,
-        "a",
-        newline=""
-    ) as file:
-
+    with open(PAYMENTS_FILE, "a", newline="") as file:
         writer = csv.writer(file)
-
         writer.writerow([
             payment_id,
             student_id,
@@ -107,172 +63,80 @@ def upload_screenshot():
             datetime.now().date()
         ])
 
-    print(
-        "Payment screenshot uploaded successfully."
-    )
+    return jsonify({
+        "message": "Payment uploaded successfully",
+        "payment_id": payment_id,
+        "status": "Pending"
+    })
 
-    print(
-        f"Payment ID: {payment_id}"
-    )
-
-    print(
-        "Verification Status: Pending"
-    )
-
-
+# -------------------------------
+# Verify Payment
+# -------------------------------
+@app.route("/verify-payment", methods=["POST"])
 def verify_payment():
 
-    payment_id = input(
-        "Enter Payment ID: "
-    )
+    payment_id = request.json.get("payment_id")
 
     rows = []
-
     found = False
 
-    with open(
-        PAYMENTS_FILE,
-        "r"
-    ) as file:
-
+    with open(PAYMENTS_FILE, "r") as file:
         reader = csv.reader(file)
-
         header = next(reader)
 
         for row in reader:
-
-            if row[0] == payment_id:
-
+            if row[0] == str(payment_id):
                 row[4] = "Verified"
-
                 found = True
-
             rows.append(row)
 
-    with open(
-        PAYMENTS_FILE,
-        "w",
-        newline=""
-    ) as file:
-
+    with open(PAYMENTS_FILE, "w", newline="") as file:
         writer = csv.writer(file)
-
-        writer.writerow(
-            header
-        )
-
-        writer.writerows(
-            rows
-        )
+        writer.writerow(header)
+        writer.writerows(rows)
 
     if found:
-
-        print(
-            "Payment Verified Successfully"
-        )
-
+        return jsonify({"message": "Payment Verified Successfully"})
     else:
+        return jsonify({"error": "Payment ID Not Found"}), 404
 
-        print(
-            "Payment ID Not Found"
-        )
-
-
+# -------------------------------
+# Payment History
+# -------------------------------
+@app.route("/payment-history", methods=["GET"])
 def payment_history():
 
-    print(
-        "\n===== PAYMENT HISTORY =====\n"
-    )
+    data = []
 
-    with open(
-        PAYMENTS_FILE,
-        "r"
-    ) as file:
-
+    with open(PAYMENTS_FILE, "r") as file:
         reader = csv.reader(file)
+        for row in reader:
+            data.append(row)
+
+    return jsonify(data)
+
+# -------------------------------
+# Check Payment Status
+# -------------------------------
+@app.route("/payment-status", methods=["GET"])
+def payment_status():
+
+    payment_id = request.args.get("payment_id")
+
+    with open(PAYMENTS_FILE, "r") as file:
+        reader = csv.DictReader(file)
 
         for row in reader:
+            if row["payment_id"] == payment_id:
+                return jsonify({
+                    "payment_id": payment_id,
+                    "status": row["status"]
+                })
 
-            print(row)
+    return jsonify({"error": "Payment Not Found"}), 404
 
-
-def check_payment_status():
-
-    payment_id = input(
-        "Enter Payment ID: "
-    )
-
-    found = False
-
-    with open(
-        PAYMENTS_FILE,
-        "r"
-    ) as file:
-
-        reader = csv.DictReader(
-            file
-        )
-
-        for row in reader:
-
-            if (
-                row["payment_id"]
-                ==
-                payment_id
-            ):
-
-                found = True
-
-                print(
-                    f"Status: {row['status']}"
-                )
-
-                break
-
-    if not found:
-
-        print(
-            "Payment Not Found"
-        )
-
-
+# -------------------------------
+# Run App
+# -------------------------------
 if __name__ == "__main__":
-
-    while True:
-
-        print("\n")
-        print("1. Upload Screenshot")
-        print("2. Verify Payment")
-        print("3. Payment History")
-        print("4. Check Payment Status")
-        print("5. Exit")
-
-        choice = input(
-            "Enter Choice: "
-        )
-
-        if choice == "1":
-
-            upload_screenshot()
-
-        elif choice == "2":
-
-            verify_payment()
-
-        elif choice == "3":
-
-            payment_history()
-
-        elif choice == "4":
-
-            check_payment_status()
-
-        elif choice == "5":
-
-            break
-
-        else:
-
-            print(
-                "Invalid Choice"
-            )
+    app.run(debug=True)
