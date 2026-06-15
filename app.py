@@ -1,10 +1,11 @@
-from flask import Flask
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Library System Running"
+    return jsonify({"status": "Library system running"})
+
 
 if __name__ == "__main__":
     app.run()
