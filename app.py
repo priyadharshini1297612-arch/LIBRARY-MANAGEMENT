@@ -1,4 +1,3 @@
-pip install flask
 from flask import Flask, render_template
 
 app = Flask(__name__)
@@ -72,7 +71,3 @@ def report():
 @app.route("/admin")
 def admin():
     return "Admin login page"
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
