@@ -1,43 +1,26 @@
-from flask import Flask, jsonify, request
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return jsonify({"status": "Library system running"})
-
-
-if __name__ == "__main__":
-    app.run()
-from flask import send_from_directory
-
-@app.route("/favicon.ico")
-def favicon():
-    return "", 204
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 import csv
 import os
 
 app = Flask(__name__)
 
+# -------------------------------
+# FILE PATHS
+# -------------------------------
 BOOKS_FILE = "data/books.csv"
 STUDENTS_FILE = "data/students.csv"
 
-
+# -------------------------------
+# INIT FILES
+# -------------------------------
 def initialize_files():
+
     os.makedirs("data", exist_ok=True)
 
     if not os.path.exists(BOOKS_FILE):
         with open(BOOKS_FILE, "w", newline="") as file:
             writer = csv.writer(file)
-
-            writer.writerow([
-                "book_id",
-                "title",
-                "author",
-                "available"
-            ])
-
+            writer.writerow(["book_id", "title", "author", "available"])
             writer.writerows([
                 ["1", "Python Programming", "John Smith", "Yes"],
                 ["2", "Machine Learning", "Andrew Ng", "Yes"],
@@ -49,24 +32,23 @@ def initialize_files():
     if not os.path.exists(STUDENTS_FILE):
         with open(STUDENTS_FILE, "w", newline="") as file:
             writer = csv.writer(file)
-
-            writer.writerow([
-                "student_id",
-                "name",
-                "email"
-            ])
-
+            writer.writerow(["student_id", "name", "email"])
 
 initialize_files()
 
-
+# -------------------------------
+# HOME
+# -------------------------------
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return jsonify({"status": "Library system running"})
 
-
+# -------------------------------
+# BOOKS
+# -------------------------------
 @app.route("/books")
 def books():
+
     books_list = []
 
     with open(BOOKS_FILE, "r") as file:
@@ -75,150 +57,73 @@ def books():
         for row in reader:
             books_list.append(row)
 
-    return render_template(
-        "books.html",
-        books=books_list
-    )
+    return jsonify(books_list)
 
-
-@app.route(
-    "/register",
-    methods=["GET", "POST"]
-)
+# -------------------------------
+# REGISTER STUDENT
+# -------------------------------
+@app.route("/register", methods=["POST"])
 def register():
 
-    if request.method == "POST":
+    data = request.get_json()
 
-        student_id = request.form["student_id"]
+    student_id = data.get("student_id")
+    name = data.get("name")
+    email = data.get("email")
 
-        name = request.form["name"]
+    with open(STUDENTS_FILE, "a", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow([student_id, name, email])
 
-        email = request.form["email"]
+    return jsonify({"message": "Student registered successfully"})
 
-        with open(
-            STUDENTS_FILE,
-            "a",
-            newline=""
-        ) as file:
-
-            writer = csv.writer(file)
-
-            writer.writerow([
-                student_id,
-                name,
-                email
-            ])
-
-        return (
-            "<h2>Student Registered Successfully</h2>"
-            "<br><a href='/'>Back to Home</a>"
-        )
-
-    return render_template(
-        "register.html"
-    )
-
-
+# -------------------------------
+# PLACEHOLDER ROUTES (SAFE)
+# -------------------------------
 @app.route("/borrow")
 def borrow():
-    return (
-        "<h2>Borrow Book page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
-
+    return jsonify({"message": "Borrow API coming soon"})
 
 @app.route("/return")
 def return_book():
-    return (
-        "<h2>Return Book page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
-
+    return jsonify({"message": "Return API coming soon"})
 
 @app.route("/search")
 def search():
-    return (
-        "<h2>Search Book page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
-
+    return jsonify({"message": "Search API coming soon"})
 
 @app.route("/reserve")
 def reserve():
-    return (
-        "<h2>Reserve Book page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
-
+    return jsonify({"message": "Reserve API coming soon"})
 
 @app.route("/admin")
 def admin():
-    return (
-        "<h2>Admin Login page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
-
+    return jsonify({"message": "Admin API coming soon"})
 
 @app.route("/recommend")
 def recommend():
-    return (
-        "<h2>AI Recommendation page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
-
+    return jsonify({"message": "Recommendation API coming soon"})
 
 @app.route("/chatbot")
 def chatbot():
-    return (
-        "<h2>AI Chatbot page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
-
+    return jsonify({"message": "Chatbot API coming soon"})
 
 @app.route("/payment")
 def payment():
-    return (
-        "<h2>Payment Upload page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
-
+    return jsonify({"message": "Payment API coming soon"})
 
 @app.route("/history")
 def history():
-    return (
-        "<h2>Transaction History page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
-
+    return jsonify({"message": "History API coming soon"})
 
 @app.route("/analytics")
 def analytics():
-    return (
-        "<h2>Analytics page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
-
-
-@app.route("/monthly")
-def monthly():
-    return (
-        "<h2>Monthly Analytics page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
-
+    return jsonify({"message": "Analytics API coming soon"})
 
 @app.route("/report")
 def report():
-    return (
-        "<h2>PDF Report page coming soon.</h2>"
-        "<br><a href='/'>Back to Home</a>"
-    )
+    return jsonify({"message": "Report API coming soon"})
 
-
-if __name__ == "__main__":
-    app.run(debug=True)
-
-
-
-
-
+# -------------------------------
+# VERCEL ENTRY (IMPORTANT)
+# -------------------------------
