@@ -1,9 +1,6 @@
-from flask import Flask, request, jsonify
 import csv
 import os
 from datetime import datetime
-
-app = Flask(__name__)
 
 # -------------------------------
 # FILE PATHS
@@ -30,9 +27,8 @@ def init_files():
             writer.writerow(["user", "book_id", "action", "date"])
 
 # -------------------------------
-# 1. View Books
+# 1. View Books (LOGIC ONLY)
 # -------------------------------
-@app.route("/books", methods=["GET"])
 def view_books():
 
     books = []
@@ -43,15 +39,12 @@ def view_books():
         for row in reader:
             books.append(row)
 
-    return jsonify(books)
+    return books
 
 # -------------------------------
 # 2. Search Book
 # -------------------------------
-@app.route("/search", methods=["GET"])
-def search_book():
-
-    query = request.args.get("q", "").lower()
+def search_book(query):
 
     results = []
 
@@ -59,21 +52,15 @@ def search_book():
         reader = csv.DictReader(file)
 
         for row in reader:
-            if query in row["title"].lower() or query in row["author"].lower():
+            if query.lower() in row["title"].lower() or query.lower() in row["author"].lower():
                 results.append(row)
 
-    return jsonify(results)
+    return results
 
 # -------------------------------
 # 3. Borrow Book
 # -------------------------------
-@app.route("/borrow", methods=["POST"])
-def borrow_book():
-
-    data = request.get_json()
-
-    user = data.get("user")
-    book_id = data.get("book_id")
+def borrow_book(user, book_id):
 
     books = []
     found = False
@@ -90,7 +77,7 @@ def borrow_book():
             books.append(row)
 
     if not found:
-        return jsonify({"error": "Book not available"}), 400
+        return {"error": "Book not available"}
 
     with open(BOOKS_FILE, "w", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
@@ -99,22 +86,12 @@ def borrow_book():
 
     log_transaction(user, book_id, "borrow")
 
-    return jsonify({
-        "message": "Book borrowed successfully",
-        "book_id": book_id,
-        "user": user
-    })
+    return {"message": "Book borrowed successfully"}
 
 # -------------------------------
 # 4. Return Book
 # -------------------------------
-@app.route("/return", methods=["POST"])
-def return_book():
-
-    data = request.get_json()
-
-    user = data.get("user")
-    book_id = data.get("book_id")
+def return_book(user, book_id):
 
     books = []
 
@@ -135,35 +112,20 @@ def return_book():
 
     log_transaction(user, book_id, "return")
 
-    return jsonify({
-        "message": "Book returned successfully",
-        "book_id": book_id,
-        "user": user
-    })
+    return {"message": "Book returned successfully"}
 
 # -------------------------------
 # 5. Reserve Book
 # -------------------------------
-@app.route("/reserve", methods=["POST"])
-def reserve_book():
-
-    data = request.get_json()
-
-    user = data.get("user")
-    book_id = data.get("book_id")
+def reserve_book(user, book_id):
 
     log_transaction(user, book_id, "reserve")
 
-    return jsonify({
-        "message": "Book reserved successfully",
-        "book_id": book_id,
-        "user": user
-    })
+    return {"message": "Book reserved successfully"}
 
 # -------------------------------
 # 6. Transaction History
 # -------------------------------
-@app.route("/transactions", methods=["GET"])
 def transaction_history():
 
     data = []
@@ -174,10 +136,10 @@ def transaction_history():
         for row in reader:
             data.append(row)
 
-    return jsonify(data)
+    return data
 
 # -------------------------------
-# LOG TRANSACTIONS
+# LOG TRANSACTION
 # -------------------------------
 def log_transaction(user, book_id, action):
 
@@ -190,7 +152,3 @@ def log_transaction(user, book_id, action):
             action,
             datetime.now().date()
         ])
-
-# -------------------------------
-# INIT + RUN
-# -------------------------------
