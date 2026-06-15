@@ -1,39 +1,50 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, request
 import csv
 import os
 
+# IMPORTANT: must exist BEFORE any routes
 app = Flask(__name__)
 
 # -------------------------------
 # FILE PATHS
 # -------------------------------
-BOOKS_FILE = "data/books.csv"
-STUDENTS_FILE = "data/students.csv"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+
+BOOKS_FILE = os.path.join(DATA_DIR, "books.csv")
+STUDENTS_FILE = os.path.join(DATA_DIR, "students.csv")
 
 # -------------------------------
-# INIT FILES
+# SAFE INIT FILES (Vercel FIXED)
 # -------------------------------
 def initialize_files():
 
-    os.makedirs("data", exist_ok=True)
+    try:
+        os.makedirs(DATA_DIR, exist_ok=True)
 
-    if not os.path.exists(BOOKS_FILE):
-        with open(BOOKS_FILE, "w", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(["book_id", "title", "author", "available"])
-            writer.writerows([
-                ["1", "Python Programming", "John Smith", "Yes"],
-                ["2", "Machine Learning", "Andrew Ng", "Yes"],
-                ["3", "Data Science Basics", "Alice Brown", "Yes"],
-                ["4", "Artificial Intelligence", "Stuart Russell", "Yes"],
-                ["5", "Deep Learning", "Ian Goodfellow", "Yes"]
-            ])
+        # books.csv
+        if not os.path.exists(BOOKS_FILE):
+            with open(BOOKS_FILE, "w", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow(["book_id", "title", "author", "available"])
+                writer.writerows([
+                    ["1", "Python Programming", "John Smith", "Yes"],
+                    ["2", "Machine Learning", "Andrew Ng", "Yes"],
+                    ["3", "Data Science Basics", "Alice Brown", "Yes"],
+                    ["4", "Artificial Intelligence", "Stuart Russell", "Yes"],
+                    ["5", "Deep Learning", "Ian Goodfellow", "Yes"]
+                ])
 
-    if not os.path.exists(STUDENTS_FILE):
-        with open(STUDENTS_FILE, "w", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(["student_id", "name", "email"])
+        # students.csv
+        if not os.path.exists(STUDENTS_FILE):
+            with open(STUDENTS_FILE, "w", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow(["student_id", "name", "email"])
 
+    except Exception as e:
+        print("Init error:", e)
+
+# Run once safely
 initialize_files()
 
 # -------------------------------
@@ -49,15 +60,22 @@ def home():
 @app.route("/books")
 def books():
 
-    books_list = []
+    try:
+        books_list = []
 
-    with open(BOOKS_FILE, "r") as file:
-        reader = csv.DictReader(file)
+        if not os.path.exists(BOOKS_FILE):
+            return jsonify([])
 
-        for row in reader:
-            books_list.append(row)
+        with open(BOOKS_FILE, "r") as file:
+            reader = csv.DictReader(file)
 
-    return jsonify(books_list)
+            for row in reader:
+                books_list.append(row)
+
+        return jsonify(books_list)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # -------------------------------
 # REGISTER STUDENT
@@ -65,20 +83,27 @@ def books():
 @app.route("/register", methods=["POST"])
 def register():
 
-    data = request.get_json()
+    try:
+        data = request.get_json()
 
-    student_id = data.get("student_id")
-    name = data.get("name")
-    email = data.get("email")
+        student_id = data.get("student_id")
+        name = data.get("name")
+        email = data.get("email")
 
-    with open(STUDENTS_FILE, "a", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow([student_id, name, email])
+        if not all([student_id, name, email]):
+            return jsonify({"error": "Missing fields"}), 400
 
-    return jsonify({"message": "Student registered successfully"})
+        with open(STUDENTS_FILE, "a", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow([student_id, name, email])
+
+        return jsonify({"message": "Student registered successfully"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # -------------------------------
-# PLACEHOLDER ROUTES (SAFE)
+# SAFE PLACEHOLDER ROUTES
 # -------------------------------
 @app.route("/borrow")
 def borrow():
@@ -127,3 +152,4 @@ def report():
 # -------------------------------
 # VERCEL ENTRY (IMPORTANT)
 # -------------------------------
+# DO NOT add app.run()
