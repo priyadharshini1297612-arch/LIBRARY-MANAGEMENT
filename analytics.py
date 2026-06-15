@@ -1,9 +1,6 @@
-from flask import Flask, jsonify
 import csv
-from collections import Counter
 import os
-
-app = Flask(__name__)
+from collections import Counter
 
 # -------------------------------
 # FILE PATH
@@ -26,8 +23,7 @@ def ensure_file():
 # -------------------------------
 # 1. Top borrowed books
 # -------------------------------
-@app.route("/analytics/top-books", methods=["GET"])
-def top_borrowed_books():
+def get_top_borrowed_books():
 
     ensure_file()
 
@@ -40,17 +36,12 @@ def top_borrowed_books():
             if row["action"] == "borrow":
                 book_counter[row["book_id"]] += 1
 
-    top_books = book_counter.most_common(5)
-
-    return jsonify({
-        "top_borrowed_books": top_books
-    })
+    return book_counter.most_common(5)
 
 # -------------------------------
 # 2. User activity summary
 # -------------------------------
-@app.route("/analytics/user-activity", methods=["GET"])
-def user_activity():
+def get_user_activity():
 
     ensure_file()
 
@@ -62,17 +53,12 @@ def user_activity():
         for row in reader:
             user_counter[row["user"]] += 1
 
-    activity = user_counter.most_common()
-
-    return jsonify({
-        "user_activity": activity
-    })
+    return user_counter.most_common()
 
 # -------------------------------
 # 3. Borrow vs Return stats
 # -------------------------------
-@app.route("/analytics/stats", methods=["GET"])
-def stats():
+def get_stats():
 
     ensure_file()
 
@@ -84,12 +70,8 @@ def stats():
         for row in reader:
             actions[row["action"]] += 1
 
-    return jsonify({
+    return {
         "borrow_count": actions.get("borrow", 0),
         "return_count": actions.get("return", 0),
         "reserve_count": actions.get("reserve", 0)
-    })
-
-# -------------------------------
-# Run App
-# -----------------------------
+    }
