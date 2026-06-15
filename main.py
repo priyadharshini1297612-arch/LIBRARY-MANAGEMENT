@@ -1,161 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Library Management System</title>
+    <style>
+        body {
+            font-family: Arial;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
 
+        .container {
+            width: 500px;
+            margin: auto;
+            margin-top: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
 
-from library import (
-    register_student,
-    view_books,
-    borrow_book,
-    initialize_files,
-    return_book,
-    search_book,
-    reserve_book,
-    transaction_history
-)
+        h1 {
+            color: darkblue;
+        }
 
-from chatbot import chatbot
-from payment import upload_screenshot
-from analytics import (
-    top_borrowed_books,
-    monthly_analytics
-)
-from report_generator import generate_pdf_report
-from recommendation import recommend_book
+        a {
+            display: block;
+            margin: 10px;
+            padding: 12px;
+            text-decoration: none;
+            background-color: darkblue;
+            color: white;
+            border-radius: 5px;
+        }
 
+        a:hover {
+            background-color: navy;
+        }
+    </style>
+</head>
 
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin123"
+<body>
 
+<div class="container">
 
-def admin_login():
+    <h1>AI Library Management System</h1>
 
-    username = input("Username: ")
-    password = input("Password: ")
+    <a href="/admin">Admin Login</a>
 
-    if (
-        username == ADMIN_USERNAME
-        and
-        password == ADMIN_PASSWORD
-    ):
+    <a href="/register">Student Registration</a>
 
-        print("\nLogin Successful")
-        return True
+    <a href="/books">View Books</a>
 
-    print("\nInvalid Credentials")
-    return False
+    <a href="/borrow">Borrow Book</a>
 
+    <a href="/return">Return Book</a>
 
-def recommendation_menu():
+    <a href="/search">Search Book</a>
 
-    interest = input(
-        "\nEnter Interest: "
-    )
+    <a href="/reserve">Reserve Book</a>
 
-    book = recommend_book(
-        interest
-    )
+    <a href="/recommend">AI Recommendation</a>
 
-    print(
-        f"\nRecommended Book: {book}"
-    )
+    <a href="/chatbot">AI Chatbot</a>
 
-initialize_files()
-def main_menu():
+    <a href="/payment">Upload Payment Screenshot</a>
 
-    while True:
+    <a href="/history">Transaction History</a>
 
-        print("\n")
-        print("=" * 50)
-        print("AI LIBRARY MANAGEMENT SYSTEM")
-        print("=" * 50)
+    <a href="/analytics">Top Borrowed Books</a>
 
-        print("1. Admin Login")
-        print("2. Student Registration")
-        print("3. View Books")
-        print("4. Borrow Book")
-        print("5. Return Book")
-        print("6. Search Book")
-        print("7. Reserve Book")
-        print("8. AI Recommendation")
-        print("9. AI Chatbot")
-        print("10. Upload Payment Screenshot")
-        print("11. Transaction History")
-        print("12. Top Borrowed Books")
-        print("13. Monthly Analytics")
-        print("14. Generate PDF Report")
-        print("15. Exit")
+    <a href="/monthly">Monthly Analytics</a>
 
-        choice = input(
-            "\nEnter Choice: "
-        )
+    <a href="/report">Generate PDF Report</a>
 
-        if choice == "1":
+</div>
 
-            admin_login()
-
-        elif choice == "2":
-
-            register_student()
-
-        elif choice == "3":
-
-            view_books()
-
-        elif choice == "4":
-
-            borrow_book()
-
-        elif choice == "5":
-
-            return_book()
-
-        elif choice == "6":
-
-            search_book()
-
-        elif choice == "7":
-
-            reserve_book()
-
-        elif choice == "8":
-
-            recommendation_menu()
-
-        elif choice == "9":
-
-            chatbot()
-
-        elif choice == "10":
-
-            upload_screenshot()
-
-        elif choice == "11":
-
-            transaction_history()
-
-        elif choice == "12":
-
-            top_borrowed_books()
-
-        elif choice == "13":
-
-            monthly_analytics()
-
-        elif choice == "14":
-
-            generate_pdf_report()
-
-        elif choice == "15":
-
-            print(
-                "\nThank you for using the system."
-            )
-            break
-
-        else:
-
-            print(
-                "\nInvalid Choice"
-            )
-
-
-if __name__ == "__main__":
-    main_menu()
+</body>
+</html>
